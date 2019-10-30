@@ -75,7 +75,7 @@ if [ $ERRORCODE -eq 0 ]; then
 
 *'$UPGRADE_CMD'*
 
-$(${OPTIONAL_SUDO}${UPGRADE_CMD} ${PACMAN_APPENDAGE} 2> /dev/stdout)
+$(${OPTIONAL_SUDO}${UPGRADE_CMD} ${PACMAN_APPENDAGE} 2>> /dev/stdout)
 "
 
 elif [ $ERRORCODE -eq 1 ]; then
