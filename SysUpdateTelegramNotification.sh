@@ -45,7 +45,7 @@ for ((i=1;i<=$#;i++)); do
         help
     elif [ ${!i} = "--ignore" ]; then
         ((i++))
-        if [ -n "${!i}" ]; then PACMAN_APPENDAGE="--ignore ${!i}"; fi
+        if [ -n "${!i}" ]; then PACMAN_APPENDAGE=" --ignore ${!i}"; fi
     elif [ ${!i} = "--console" ]; then
         PRINT_TO_SDTOUT=1
     elif [ ${!i} = "--sudo" ]; then
@@ -73,9 +73,9 @@ fi
 if [ $ERRORCODE -eq 0 ]; then
     template="${HEADER}
 
-*'$UPGRADE_CMD'*
+*'${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE}'*
 
-$(${OPTIONAL_SUDO}${UPGRADE_CMD} ${PACMAN_APPENDAGE} 2>> /dev/stdout)
+$(${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE} 2>> /dev/stdout)
 "
 
 elif [ $ERRORCODE -eq 1 ]; then
