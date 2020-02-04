@@ -7,6 +7,7 @@
 TELEGRAM_CHAT_ID="$(cat /root/.secrets/tg-chatid.txt)"
 TELEGRAM_BOT_TOKEN="$(cat /root/.secrets/tg-token.txt)"
 APT_UPGRADE_CMD="dist-upgrade"          # choose between 'upgrade' or 'dist-upgrade' (only relevant on deb-based OS)
+RETRIES=10
 
 ## End of editable area
 ##
@@ -72,11 +73,12 @@ fi
 
 if [ $ERRORCODE -eq 0 ]; then
     template="${HEADER}
-
 *'${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE}'*
 
-$(${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE} 2>> /dev/stdout)
+$(${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE} 2>> /dev/stdout | grep -vE "downloading|\[Y/n\]|checking|upgrading [-a-zA-Z0-9]+..." | sed 's/_/\_/g')
 "
+
+    template=$(echo "$template" | sed 's|_|\\_|g')
 
 elif [ $ERRORCODE -eq 1 ]; then
     template="${HEADER}
@@ -93,12 +95,12 @@ Could not find apt-get or pacman"
 fi
 
 
-/usr/bin/curl --silent --output /dev/null \
---data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
---data-urlencode "text=${template}" \
---data-urlencode "parse_mode=Markdown" \
---data-urlencode "disable_web_page_preview=true" \
-"https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
+output=$(/usr/bin/curl --silent --output /dev/null \
+         --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+         --data-urlencode "text=${template}" \
+         --data-urlencode "parse_mode=Markdown" \
+         --data-urlencode "disable_web_page_preview=true" \
+         "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage")
 
 
 if [ $PRINT_TO_SDTOUT -eq 1 ]; then
