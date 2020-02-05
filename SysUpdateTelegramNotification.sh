@@ -75,10 +75,8 @@ if [ $ERRORCODE -eq 0 ]; then
     template="${HEADER}
 *'${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE}'*
 
-$(${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE} 2>> /dev/stdout | grep -vE "downloading|\[Y/n\]|checking|upgrading [-a-zA-Z0-9]+..." | sed 's/_/\_/g')
+$(${OPTIONAL_SUDO}${UPGRADE_CMD}${PACMAN_APPENDAGE} 2>> /dev/stdout | grep -vE "downloading|\[Y/n\]|checking|upgrading [-a-zA-Z0-9]+...|\(Reading database.*\$" | sed 's/_/\_/g')
 "
-
-    template=$(echo "$template" | sed 's|_|\\_|g')
 
 elif [ $ERRORCODE -eq 1 ]; then
     template="${HEADER}
@@ -94,15 +92,29 @@ Could not find apt-get or pacman"
 
 fi
 
-
-output=$(/usr/bin/curl --silent --output /dev/null \
-         --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-         --data-urlencode "text=${template}" \
-         --data-urlencode "parse_mode=Markdown" \
-         --data-urlencode "disable_web_page_preview=true" \
-         "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage")
-
-
 if [ $PRINT_TO_SDTOUT -eq 1 ]; then
     echo "$template"
 fi
+
+i=0
+while [ $i -lt $RETRIES ]; do
+    # Telegram messages are not successfully sent when the message contains underscores. Therefore escaping them:
+    template=$(echo "$template" | sed 's|_|\\_|g')
+    output=$(/usr/bin/curl --silent --output /dev/null \
+             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+             --data-urlencode "text=${template}" \
+             --data-urlencode "parse_mode=Markdown" \
+             --data-urlencode "disable_web_page_preview=true" \
+             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage")
+
+    error_code=$?
+    if [ $error_code -eq 0 ]; then
+        break
+    else
+        if [ $PRINT_TO_SDTOUT -eq 1 ]; then echo "-------------------------------------------"; fi
+        echo "Error sending Telegram message. curl returned: $error_code"
+        echo "Retries: $(($i + 1)) out of $RETRIES"
+    fi
+    i=$(($i + 1))
+    sleep 5
+done
