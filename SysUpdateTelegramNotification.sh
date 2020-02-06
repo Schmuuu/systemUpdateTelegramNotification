@@ -6,7 +6,7 @@
 
 TELEGRAM_CHAT_ID="$(cat /root/.secrets/tg-chatid.txt)"
 TELEGRAM_BOT_TOKEN="$(cat /root/.secrets/tg-token.txt)"
-APT_UPGRADE_CMD="dist-upgrade"          # choose between 'upgrade' or 'dist-upgrade' (only relevant on deb-based OS)
+APT_UPGRADE_CMD="upgrade"          # choose between 'upgrade' or 'dist-upgrade' (only relevant on deb-based OS)
 RETRIES=10
 
 ## End of editable area
@@ -25,7 +25,7 @@ help() {
     echo    "and the bot's token in: /root/.secrets/tg-chatid.txt and /root/.secrets/tg-token.txt"
     echo -e "\nThe script runs either:"
     echo    "  * pacman -Syu --noconfirm [ --ignore <package name(s)> ]"
-    echo -e "  * apt-get -y -q $APT_UPGRADE_CMD  # choose between 'upgrade' and 'dist-upgrade' in vars\n"
+    echo -e "  * apt -y -q $APT_UPGRADE_CMD  # choose between 'upgrade' and 'dist-upgrade' in vars\n"
     echo    "Additional options are: "
     echo    "  -h | --help                 this output"
     echo    "  --ignore <package name(s)>  (pacman only) don't update comma-seperated list of packages"
@@ -58,9 +58,9 @@ which apt-get 1> /dev/null 2>&1
 RC=$?
 
 if [ $RC -eq 0 ]; then
-    apt-get update 1> /dev/null 2>&1
+    apt update 1> /dev/null 2>&1
     if [ $? -ne 0 ]; then ERRORCODE=1; fi
-    UPGRADE_CMD="apt-get -y -q ${APT_UPGRADE_CMD}"
+    UPGRADE_CMD="apt -y ${APT_UPGRADE_CMD}"
 else
     which pacman 1> /dev/null 2>&1
     RC=$?
